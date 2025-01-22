@@ -2,9 +2,9 @@ package com.example.demo.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+
 import io.jsonwebtoken.security.Keys;
-import jakarta.xml.bind.DatatypeConverter;
+
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -16,7 +16,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+
 
 import javax.crypto.SecretKey;
 
