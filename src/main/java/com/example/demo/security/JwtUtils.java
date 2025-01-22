@@ -4,27 +4,26 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.time.Instant;
 
-import java.util.Collection;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Component
-public class JwtUtil {
+public class JwtUtils {
 
     @Value("${jwt.secret-key}")
     private String SECRET_KEY;
 
-    @Value("${jwt.expiration-ms}")
-    private long JWT_EXPIRATION_MS;
+    @Value("${jwt.access-token.expiration-ms}")
+    private long ACCESS_TOKEN_EXPIRATION_MS;
 
     @Value("${jwt.refresh-token.expiration-ms}")
     private long REFRESH_TOKEN_EXPIRATION_MS;
@@ -34,23 +33,26 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", userDetails.getUsername()); // Subject (username)
-        claims.put("roles", userDetails.getAuthorities()); // User roles
-        claims.put("userId", ((CustomUserDetails) userDetails).getUserId()); // Custom claim: userId
+        return createToken(new HashMap<>(), userDetails.getUsername(), ACCESS_TOKEN_EXPIRATION_MS);
+    }
 
+    public String generateRefreshToken(UserDetails userDetails) {
+        return createToken(new HashMap<>(), userDetails.getUsername(), REFRESH_TOKEN_EXPIRATION_MS);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, long expirationMs) {
         return Jwts.builder()
-            .claims(claims) // Use the modern claims method
-            .subject(userDetails.getUsername()) // Subject (username)
-            .issuedAt(Date.from(Instant.now())) // Issued at (current time)
-            .expiration(Date.from(Instant.now().plusMillis(JWT_EXPIRATION_MS))) // Expiration time
-            .signWith(generateKey()) // Sign with SecretKey
+            .claims(claims)
+            .subject(subject)
+            .issuedAt(Date.from(Instant.now()))
+            .expiration(Date.from(Instant.now().plusMillis(expirationMs)))
+            .signWith(getSigningKey())
             .compact();
     }
 
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-            .verifyWith(generateKey()) // Verify with SecretKey
+            .verifyWith(getSigningKey()) // Verify with SecretKey
             .build()
             .parseSignedClaims(token)
             .getPayload();
@@ -69,14 +71,6 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public Collection<? extends GrantedAuthority> extractRoles(String token) {
-        return extractClaim(token, claims -> (Collection<? extends GrantedAuthority>) claims.get("roles"));
-    }
-
-    public Long extractUserId(String token) {
-        return extractClaim(token, claims -> claims.get("userId", Long.class));
-    }
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
@@ -86,4 +80,8 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
+    public long getExpirationInSeconds(String token) {
+        Date expiration = extractExpiration(token);
+        return (expiration.getTime() - System.currentTimeMillis()) / 1000; // Convert to seconds
+    }
 }
