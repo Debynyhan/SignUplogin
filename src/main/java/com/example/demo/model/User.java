@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -9,7 +10,6 @@ import jakarta.persistence.*;
 
 import lombok.*;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -30,12 +30,12 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String role;
-    
+    private List<String> roles;
+
     @CreatedDate
     @Column(nullable = false)
     private LocalDateTime createdAt;
-    
+
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
@@ -49,11 +49,11 @@ public class User {
     public LocalDateTime lastLogin;
 
     // Constructors, getters, and setters
-    public User(String username, String password, String email, String role) {
+    public User(String username, String password, String email, List<String> roles) {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.role = role;
+        this.roles = roles;
     }
 
     @PrePersist
@@ -67,7 +67,6 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-     
     // Getters and setters
     public Long getId() {
         return id;
@@ -101,14 +100,14 @@ public class User {
         this.email = email;
     }
 
-    public String getRole() {
-        return role;
+    public List<String> getRoles() {
+        return roles;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
-    
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -148,6 +147,5 @@ public class User {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
 
 }
